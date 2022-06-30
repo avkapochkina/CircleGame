@@ -44,7 +44,7 @@ struct Player
 	const uint32_t orbiteColour = (int(255) << 24) + (int(50) << 16) + (int(50) << 8) + int(50);
 	const uint32_t radius = 20; // moving circles radius
 	const uint32_t colour = red; // moving circles colour
-	uint32_t velocity = 1;
+	float velocity = 0.01;
 	int direction = 1; //1 / -1
     uint32_t x0 = SCREEN_HEIGHT / 2;
     uint32_t y0 = SCREEN_WIDTH / 2 + orbiteRadius;
@@ -187,39 +187,16 @@ void fillCircle(int x0, int y0, int radius, uint32_t colour)
 
 void updateCircles()
 {
-	//player.x0 = SCREEN_HEIGHT / 2;
-	//player.y0 = SCREEN_WIDTH / 2 + player.orbiteRadius;
-	//player.x1 = SCREEN_HEIGHT / 2;
-	//player.y1 = SCREEN_WIDTH / 2 - player.orbiteRadius;
-	int x = player.x0 - SCREEN_HEIGHT / 2;
-	int y = player.y0 - SCREEN_WIDTH / 2 + player.orbiteRadius;
-	int delta = 1 - 2 * player.orbiteRadius;
-	int error = 2 * (delta + y) - 1;
-	while (y >= (player.y0 - SCREEN_WIDTH / 2)) {
-		if (delta < 0 && error <= 0)
-		{
-			x += player.direction;
-			delta += 2 * x + 1;
-		}
-		else
-		{
-			error = 2 * (delta - x) - 1;
-			if (delta > 0 && error > 0) {
-				y -= player.direction;
-				delta += 1 - 2 * y;
-			}
-			else
-			{
-				x += player.direction;
-				delta += 2 * (x - y);
-				y -= player.direction;
-			}
-		}
-	}
-	player.x0 = SCREEN_HEIGHT / 2 + x;
-	player.y0 = SCREEN_WIDTH / 2 + y - player.orbiteRadius;
-	player.x1 = SCREEN_HEIGHT / 2 - x;
-	player.y1 = SCREEN_WIDTH / 2 - y + player.orbiteRadius;
+	static double angle = 0;
+
+	angle = angle + player.velocity * player.direction;
+	double  x = cos(angle) * player.orbiteRadius * player.direction;
+	double  y = sin(angle) * player.orbiteRadius * player.direction;
+	
+	player.x0 = x + SCREEN_HEIGHT / 2;
+	player.y0 = y  + SCREEN_WIDTH / 2;
+	player.x1 = -x + SCREEN_HEIGHT / 2;
+	player.y1 = -y + SCREEN_WIDTH / 2;
 }
 
 // Bresenham's algorithm
@@ -230,7 +207,6 @@ void drawCircle(int x0, int y0, int radius, uint32_t colour)
 	int delta = 1 - 2 * radius;
 	int error = 0;
 	while (y >= 0) {
-		colour = (255 << 24) + (0 << 16) + (0 << 8) + 0;
 		memcpy(&buffer[x0 + x][y0 + y], &colour, pixelSize);
 		memcpy(&buffer[x0 + x][y0 - y], &colour, pixelSize);
 		memcpy(&buffer[x0 - x][y0 + y], &colour, pixelSize);
@@ -238,44 +214,18 @@ void drawCircle(int x0, int y0, int radius, uint32_t colour)
 		error = 2 * (delta + y) - 1;
 		if (delta < 0 && error <= 0) {
 			++x;
-			if ((x0 + x == player.x0 + player.direction && y0 + y == player.y0 + player.direction)
-				|| (x0 + x == player.x1 + player.direction && y0 + y == player.y1 + player.direction)
-				|| (x0 + x == player.x0 + player.direction && y0 - y == player.y0 + player.direction)
-				|| (x0 + x == player.x1 + player.direction && y0 - y == player.y1 + player.direction))
-			{
-				player.x0 += player.direction;
-				player.x1 += player.direction;
-			}
 			delta += 2 * x + 1;
 			continue;
 		}
 		error = 2 * (delta - x) - 1;
 		if (delta > 0 && error > 0) {
 			--y;
-			if ((x0 + x == player.x0 + player.direction && y0 + y == player.y0 + player.direction)
-				|| (x0 + x == player.x1 + player.direction && y0 + y == player.y1 + player.direction)
-				|| (x0 + x == player.x0 + player.direction && y0 - y == player.y0 + player.direction)
-				|| (x0 + x == player.x1 + player.direction && y0 - y == player.y1 + player.direction))
-			{
-				player.y0 -= player.direction;
-				player.y1 -= player.direction;
-			}
 			delta += 1 - 2 * y;
 			continue;
 		}
 		++x;
 		delta += 2 * (x - y);
 		--y;
-		if ((x0 + x == player.x0 + player.direction && y0 + y == player.y0 + player.direction)
-			|| (x0 + x == player.x1 + player.direction && y0 + y == player.y1 + player.direction)
-			|| (x0 + x == player.x0 + player.direction && y0 - y == player.y0 + player.direction)
-			|| (x0 + x == player.x1 + player.direction && y0 - y == player.y1 + player.direction))
-		{
-			player.y0 -= player.direction;
-			player.x0 += player.direction;
-			player.y1 -= player.direction;
-			player.x1 += player.direction;
-		}
 	}
 }
 
@@ -386,7 +336,7 @@ void act(float dt)
 			}
 
 		}
-		//updateCircles();
+		updateCircles();
 		timer += dt;
 		keyCooldown += dt;
 	}
