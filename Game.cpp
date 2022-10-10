@@ -4,7 +4,11 @@
 
 #include <vector>
 #include <ctime>
+#include <iostream>
 #include <stdlib.h>
+#include <string> 
+
+using namespace std;
 
 //
 //  You are free to modify this file
@@ -20,31 +24,35 @@
 //  schedule_quit_game() - quit game after act()
 
 // constants
-// uint32_t Colour = (int(b) << 24) + (int(g) << 16) + (int(r) << 8) + int(a);
 const uint32_t black = (255 << 24) + (0 << 16) + (0 << 8) + 0;
 const uint32_t white = (255 << 24) + (255 << 16) + (255 << 8) + 255;
 const uint32_t red = (255 << 24) + (255 << 16) + (0 << 8) + 0;
-const uint32_t green = (255 << 24) +(0 << 16) + (255 << 8) + 0;
-const uint32_t blue = (255 << 24) + 255;
+const uint32_t colour1 = (255 << 24) + (206 << 16) + (107 << 8) + 106;
+const uint32_t colour2 = (255 << 24) + (235 << 16) + (162 << 8) + 172;
+const uint32_t colour3 = (255 << 24) + (190 << 16) + (195 << 8) + 211;
+const uint32_t colour4 = (255 << 24) + (74 << 16) + (158 << 8) + 145;
 const int pixelSize = sizeof(uint32_t);
 const float keyCooldownMax = 0.15; // bounce defence
-const float timerMax = 1; // max time between projectile spawn
+const float timerMax = 0.7; // max time between projectile spawn
 
+const char start_string[256] = "PRESS <SPACE> TO START";
+//char about_string[256] = "PRESS <SPACE> TO CHANGE MOVEMENT DIRECTION";
+const char gameover_string[32] = "GAME OVER";
 
 // globals
 int gameStage = 0; // 0 - start, 1 - game, 2 - game over
 float timer = 0; // current time after last projectile spawned
 float keyCooldown = 0.0; // current time after space was pressed
-uint32_t backgroundColour = blue;
+uint32_t backgroundColour = white;
 
 // player info
 struct Player
 {
 	const uint32_t orbiteRadius = 100;
-	const uint32_t orbiteColour = (int(255) << 24) + (int(50) << 16) + (int(50) << 8) + int(50);
+	const uint32_t orbiteColour = black;
 	const uint32_t radius = 20; // moving circles radius
-	const uint32_t colour = red; // moving circles colour
-	float velocity = 0.01;
+	const uint32_t colour = white; // moving circles colour
+	float velocity = 0.013;
 	int direction = 1; //1 / -1
     uint32_t x0 = SCREEN_HEIGHT / 2;
     uint32_t y0 = SCREEN_WIDTH / 2 + orbiteRadius;
@@ -56,28 +64,23 @@ struct Player
 class Projectile
 {
 public:
-	const uint32_t defaultVelocity = 1;
-	uint32_t currentVelocity = defaultVelocity;
-	int direction = 1; // -1 / 1
+	float currentVelocity = 1;
+	float direction;
 
-	uint32_t pathRadius;
-	const uint32_t minPathRadius = SCREEN_WIDTH / 2;
-	const uint32_t maxPathRadius = SCREEN_WIDTH * 2;
-
-	//float spawnDelay = 1.0; // delay before next projectile spawn
-	int type; //0 - harmless, 1 - dangerous
+	int type; // 0 - harmless, 1 - dangerous
 	uint32_t radius = 20;
-	uint32_t x;
-	uint32_t y;
-	uint32_t colour;
+	float x;
+	float y;
+	uint32_t colour;  // white - harmless, black - dangerous
+
+	char buffer[32];
 
 	Projectile()
 	{
-		x = radius + (rand() * (int)(SCREEN_HEIGHT - 2 * radius) / RAND_MAX);
+		x = radius + (rand() * (int)(SCREEN_HEIGHT - 2 * radius) / RAND_MAX) + 1;
 		y = radius + 1;
 		type = rand() % 2;
-		direction *= -1;
-		pathRadius = minPathRadius + (rand() * (int)(maxPathRadius - minPathRadius) / RAND_MAX);
+		direction = (float) rand() / RAND_MAX;
 		if (type)
 			colour = black;
 		else 
@@ -86,11 +89,8 @@ public:
 
 	void updateProjectile()
 	{
-		if (y < SCREEN_WIDTH && x < SCREEN_HEIGHT)
-		{
-			x += currentVelocity;
-			y += currentVelocity;
-		}
+		x += currentVelocity * sin(direction);
+		y += currentVelocity * cos(direction);
 	}
 
 	Projectile& operator=(Projectile& prj)
@@ -100,7 +100,6 @@ public:
 		type = prj.type;
 		direction = prj.direction;
 		currentVelocity = prj.currentVelocity;
-		pathRadius = prj.pathRadius;
 		colour = prj.colour;
 		return *this;
 	}
@@ -111,7 +110,10 @@ public:
 		// 1 - hit with harmless projectile
 		// 2 - hit with dangerous projectile
 		// 3 - out for screen
-		if ((x + currentVelocity >= SCREEN_HEIGHT - radius) || (x + currentVelocity >= SCREEN_WIDTH - radius))
+		if ((x + sin(direction) * currentVelocity >= SCREEN_HEIGHT - radius) 
+			|| (y + cos(direction) * currentVelocity >= SCREEN_WIDTH - radius)
+			|| (x + sin(direction) * currentVelocity <=  radius) 
+			|| (y + cos(direction) * currentVelocity <=  radius))
 		{
 			// if circle will be out of the screen on next step
 			return 3;
@@ -122,6 +124,8 @@ public:
 			if (!type)
 			{
 				player.score += 1;
+				sprintf_s(buffer, "SCORE: %d", player.score);
+				strcpy_s(screen_text, buffer);
 				return 1;
 			}
 			else
@@ -137,8 +141,10 @@ public:
 			{
 				if (!type)
 				{
-					return 1;
 					player.score += 1;
+					sprintf_s(buffer, "SCORE: %d", player.score);
+					strcpy_s(screen_text, buffer);
+					return 1;
 				}
 				else
 				{
@@ -187,7 +193,7 @@ void fillCircle(int x0, int y0, int radius, uint32_t colour)
 
 void updateCircles()
 {
-	static double angle = 0;
+	static long double angle = 0;
 
 	angle = angle + player.velocity * player.direction;
 	double  x = cos(angle) * player.orbiteRadius * player.direction;
@@ -199,7 +205,6 @@ void updateCircles()
 	player.y1 = -y + SCREEN_WIDTH / 2;
 }
 
-// Bresenham's algorithm
 void drawCircle(int x0, int y0, int radius, uint32_t colour)
 {
 	int x = 0;
@@ -244,17 +249,15 @@ void drawBackground()
    }
  }
 
-
 // initialize game data in this function
 void initialize()
 {
 	srand(time(0));
 	gameStage = 0; 
-	backgroundColour = blue;
+	backgroundColour = black;
 	drawBackground();
-	//char text[256];
-	//char startMessage[] = "<PRESS SPACE TO START>";
-	//printf_s("%s \n", startMessage);
+
+	strcpy_s(screen_text, start_string);
 }
 
 void start()
@@ -262,8 +265,6 @@ void start()
 	projectiles.resize(0);
 	gameStage = 1;
 	timer = 0;
-	backgroundColour = green;
-
 	player.score = 0;
 	player.direction = 1;
 	player.x0 = SCREEN_HEIGHT / 2;
@@ -272,6 +273,8 @@ void start()
 	player.y1 = SCREEN_WIDTH / 2 - player.orbiteRadius;
 
 	projectiles.push_back(Projectile());
+
+	strcpy_s(screen_text, "SCORE: 0");
 }
 
 // this function is called to update game data,
@@ -310,6 +313,32 @@ void act(float dt)
 	}
 	if (gameStage == 1)
 	{
+		uint32_t c = player.score % 4;
+		switch (c)
+		{
+		case 0:
+		{
+			backgroundColour = colour1;
+			break; 
+		}
+		case 1:
+		{
+			backgroundColour = colour2;
+			break; 
+		}
+		case 2:
+		{
+			backgroundColour = colour3;
+			break; 
+		}
+		case 3:
+		{
+			backgroundColour = colour4;
+			break; 
+		}
+		default:
+			break;
+		}
 		if (timer >= timerMax)
 		{
 			projectiles.push_back(Projectile());
@@ -352,6 +381,9 @@ void draw()
 		
         break;
 	case 1:
+		//char buffer[32];
+		//sprintf_s(buffer, "SCORE: %d", player.score);
+		//strcpy_s(screen_text, buffer);
 		drawBackground();
 		drawCircle(SCREEN_HEIGHT / 2, SCREEN_WIDTH / 2, player.orbiteRadius, player.orbiteColour);
 		fillCircle(player.x0, player.y0, player.radius, player.colour);
@@ -362,7 +394,8 @@ void draw()
 		}
 		break;
 	case 2:
-		backgroundColour = red;
+		strcpy_s(screen_text, gameover_string);
+		backgroundColour = white;
 		drawBackground();
 		break;
 	}

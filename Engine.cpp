@@ -1,13 +1,12 @@
-//
-//  DO NOT MODIFY THIS FILE
-//
-
 #define WIN32_LEAN_AND_MEAN
 #include "Engine.h"
 #include <windows.h>
 #include <stdlib.h>
+#include <stdio.h>
+
 
 uint32_t buffer[SCREEN_HEIGHT][SCREEN_WIDTH] = { 0 };
+char screen_text[256] = "START";
 
 static HINSTANCE hinst = 0;
 static DWORD ticks = 0;
@@ -120,13 +119,20 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
         (BITMAPINFO*)&bih,
         DIB_RGB_COLORS);
 
+      //SetTextAlign(hdc, GetTextAlign(hdc) & (~TA_CENTER));
+      TextOut(hdc, SCREEN_WIDTH / 2 - 50, 70, screen_text, strlen(screen_text));
+
       EndPaint(hwnd, &ps);
     }
   break;
   case WM_QUIT:
   case WM_DESTROY:
     quited = true;
-    break;
+    break; 
+  case WM_ERASEBKGND:
+    return FALSE;
+  case WM_PRINT:
+    return FALSE;
   default:
     return DefWindowProc(hwnd, message, wParam, lParam);
   }

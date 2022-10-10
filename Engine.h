@@ -1,16 +1,11 @@
 #pragma once
-
-//
-//  DO NOT MODIFY THIS FILE
-//
-
 #include <stdint.h>
 
 #define SCREEN_WIDTH 1024
-#define SCREEN_HEIGHT 768
+#define SCREEN_HEIGHT 1024
 
-// backbuffer
 extern uint32_t buffer[SCREEN_HEIGHT][SCREEN_WIDTH];
+extern char screen_text[256];
 
 #ifndef VK_ESCAPE
 #  define VK_ESCAPE 0x1B
@@ -22,10 +17,8 @@ extern uint32_t buffer[SCREEN_HEIGHT][SCREEN_WIDTH];
 #  define VK_RETURN 0x0D
 #endif
 
-// VK_SPACE, VK_RIGHT, VK_LEFT, VK_UP, VK_DOWN, 'A', 'B' ...
 bool is_key_pressed(int button_vk_code);
 
-// 0 - left button, 1 - right button
 bool is_mouse_button_pressed(int button);
 
 int get_cursor_x();
