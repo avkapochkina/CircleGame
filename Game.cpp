@@ -28,9 +28,8 @@ const uint32_t black = (255 << 24) + (0 << 16) + (0 << 8) + 0;
 const uint32_t white = (255 << 24) + (255 << 16) + (255 << 8) + 255;
 const uint32_t red = (255 << 24) + (255 << 16) + (0 << 8) + 0;
 const uint32_t colour1 = (255 << 24) + (206 << 16) + (107 << 8) + 106;
-const uint32_t colour2 = (255 << 24) + (235 << 16) + (162 << 8) + 172;
-const uint32_t colour3 = (255 << 24) + (190 << 16) + (195 << 8) + 211;
-const uint32_t colour4 = (255 << 24) + (74 << 16) + (158 << 8) + 145;
+//const uint32_t colour2 = (255 << 24) + (235 << 16) + (162 << 8) + 172;
+//const uint32_t colour4 = (255 << 24) + (74 << 16) + (158 << 8) + 145;
 const int pixelSize = sizeof(uint32_t);
 const float keyCooldownMax = 0.15; // bounce defence
 const float timerMax = 0.7; // max time between projectile spawn
@@ -65,6 +64,7 @@ class Projectile
 {
 public:
 	float currentVelocity = 1;
+	float velocityDelta = 0.1;
 	float direction;
 
 	int type; // 0 - harmless, 1 - dangerous
@@ -123,9 +123,7 @@ public:
 		{
 			if (!type)
 			{
-				player.score += 1;
-				sprintf_s(buffer, "SCORE: %d", player.score);
-				strcpy_s(screen_text, buffer);
+				updateScore();
 				return 1;
 			}
 			else
@@ -141,9 +139,7 @@ public:
 			{
 				if (!type)
 				{
-					player.score += 1;
-					sprintf_s(buffer, "SCORE: %d", player.score);
-					strcpy_s(screen_text, buffer);
+					updateScore();
 					return 1;
 				}
 				else
@@ -155,6 +151,13 @@ public:
 			else
 				return 0;
 		}
+	}
+
+	void updateScore() {
+		player.score += 1;
+		sprintf_s(buffer, "SCORE: %d", player.score);
+		strcpy_s(screen_text, buffer);
+		backgroundColour = colour1 + player.score * 10;
 	}
 };
 
@@ -272,6 +275,7 @@ void start()
 	player.x1 = SCREEN_HEIGHT / 2;
 	player.y1 = SCREEN_WIDTH / 2 - player.orbiteRadius;
 
+	backgroundColour = colour1;
 	projectiles.push_back(Projectile());
 
 	strcpy_s(screen_text, "SCORE: 0");
@@ -313,32 +317,7 @@ void act(float dt)
 	}
 	if (gameStage == 1)
 	{
-		uint32_t c = player.score % 4;
-		switch (c)
-		{
-		case 0:
-		{
-			backgroundColour = colour1;
-			break; 
-		}
-		case 1:
-		{
-			backgroundColour = colour2;
-			break; 
-		}
-		case 2:
-		{
-			backgroundColour = colour3;
-			break; 
-		}
-		case 3:
-		{
-			backgroundColour = colour4;
-			break; 
-		}
-		default:
-			break;
-		}
+		//backgroundColour = colour1 + player.score * 10;
 		if (timer >= timerMax)
 		{
 			projectiles.push_back(Projectile());
