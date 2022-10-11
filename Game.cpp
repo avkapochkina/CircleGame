@@ -1,3 +1,5 @@
+// ИЗУЧАЕМ ПЕРЕВОД ВИЗУАЛКИ
+
 #include "Engine.h"
 #include <memory.h>
 #include <windows.h>
