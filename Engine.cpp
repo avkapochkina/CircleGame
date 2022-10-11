@@ -4,7 +4,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-
 uint32_t buffer[SCREEN_HEIGHT][SCREEN_WIDTH] = { 0 };
 char screen_text[256] = "START";
 
