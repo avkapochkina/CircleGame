@@ -9,11 +9,6 @@
 #include <string> 
 
 using namespace std;
-
-//
-//  You are free to modify this file
-//
-
 //  is_key_pressed(int button_vk_code) - check if a key is pressed,
 //                                       use keycodes (VK_SPACE, VK_RIGHT, VK_LEFT, VK_UP, VK_DOWN, 'A', 'B')
 //
@@ -28,14 +23,11 @@ const uint32_t black = (255 << 24) + (0 << 16) + (0 << 8) + 0;
 const uint32_t white = (255 << 24) + (255 << 16) + (255 << 8) + 255;
 const uint32_t red = (255 << 24) + (255 << 16) + (0 << 8) + 0;
 const uint32_t colour1 = (255 << 24) + (206 << 16) + (107 << 8) + 106;
-//const uint32_t colour2 = (255 << 24) + (235 << 16) + (162 << 8) + 172;
-//const uint32_t colour4 = (255 << 24) + (74 << 16) + (158 << 8) + 145;
 const int pixelSize = sizeof(uint32_t);
 const float keyCooldownMax = 0.15; // bounce defence
 const float timerMax = 0.7; // max time between projectile spawn
 
 const char start_string[256] = "PRESS <SPACE> TO START";
-//char about_string[256] = "PRESS <SPACE> TO CHANGE MOVEMENT DIRECTION";
 const char gameover_string[32] = "GAME OVER";
 
 // globals
@@ -64,7 +56,6 @@ class Projectile
 {
 public:
 	float currentVelocity = 1;
-	float velocityDelta = 0.1;
 	float direction;
 
 	int type; // 0 - harmless, 1 - dangerous
@@ -80,7 +71,14 @@ public:
 		x = radius + (rand() * (int)(SCREEN_HEIGHT - 2 * radius) / RAND_MAX) + 1;
 		y = radius + 1;
 		type = rand() % 2;
-		direction = (float) rand() / RAND_MAX;
+		// random direction
+		//direction = (float) rand() / RAND_MAX;
+		// random direction but projectile shall fly near player
+		float max_direction = atan((SCREEN_WIDTH / 2 - player.orbiteRadius) / (SCREEN_HEIGHT / 2 + player.orbiteRadius - x));
+		float min_direction = atan((x - SCREEN_HEIGHT / 2 + player.orbiteRadius) / (SCREEN_WIDTH / 2 - player.orbiteRadius));
+
+		direction = min_direction + rand() * (max_direction - min_direction) / RAND_MAX;
+
 		if (type)
 			colour = black;
 		else 
@@ -317,7 +315,6 @@ void act(float dt)
 	}
 	if (gameStage == 1)
 	{
-		//backgroundColour = colour1 + player.score * 10;
 		if (timer >= timerMax)
 		{
 			projectiles.push_back(Projectile());
@@ -342,7 +339,6 @@ void act(float dt)
 				break;
 			}
 			}
-
 		}
 		updateCircles();
 		timer += dt;
@@ -360,9 +356,6 @@ void draw()
 		
         break;
 	case 1:
-		//char buffer[32];
-		//sprintf_s(buffer, "SCORE: %d", player.score);
-		//strcpy_s(screen_text, buffer);
 		drawBackground();
 		drawCircle(SCREEN_HEIGHT / 2, SCREEN_WIDTH / 2, player.orbiteRadius, player.orbiteColour);
 		fillCircle(player.x0, player.y0, player.radius, player.colour);

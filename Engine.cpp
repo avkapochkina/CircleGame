@@ -120,7 +120,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
         DIB_RGB_COLORS);
 
       //SetTextAlign(hdc, GetTextAlign(hdc) & (~TA_CENTER));
-      TextOut(hdc, SCREEN_WIDTH / 2 - 50, 70, screen_text, strlen(screen_text));
+      TextOut(hdc, 10, 70, screen_text, strlen(screen_text));
 
       EndPaint(hwnd, &ps);
     }
